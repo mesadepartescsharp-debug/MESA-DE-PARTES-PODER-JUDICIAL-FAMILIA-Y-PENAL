@@ -4,7 +4,7 @@ using static Avances.Program;
 namespace Avances
 {
     // ==============================================================
-    // MÓDULO: USUARIOS                                (TEMAS 1, 2 y 3)
+    // MÓDULO: USUARIOS                                
     // Acceso, registro, inicio de sesión, recuperación de contraseña,
     // panel del usuario y modificación de datos de la cuenta.
     // ==============================================================
@@ -281,7 +281,7 @@ namespace Avances
             Console.Clear();
             Titulo("MIS EXPEDIENTES");
             int total = 0;
-            void MostrarTotal() { Console.WriteLine("Total de expedientes: " + total); }
+
             for (int i = 0; i < TotalExpedientes; i++)
                 if (usuarioActual >= 0 && propietariosDni[i] == usuariosDnis[usuarioActual])
                 {
@@ -290,7 +290,7 @@ namespace Avances
                                       $"{fechasRegistro[i]} {MostrarHora12(horasRegistro[i])} | {estados[i]}");
                 }
             if (total == 0) Console.WriteLine("Aún no tiene expedientes.");
-            MostrarTotal();
+            Console.WriteLine("Total de expedientes: " + total);
             Console.ReadKey();
         }
 
