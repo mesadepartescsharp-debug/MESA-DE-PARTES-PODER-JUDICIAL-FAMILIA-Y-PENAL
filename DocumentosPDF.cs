@@ -7,7 +7,7 @@ using static Avances.Program;
 namespace Avances
 {
     // ==============================================================
-    // MÓDULO: DOCUMENTOS PDF                                 (TEMA 5)
+    // MÓDULO: DOCUMENTOS PDF                                 
     // Generación de las tres constancias PDF con PDFsharp
     // (REGISTRADO, EN REVISIÓN y ATENDIDO) sobre las plantillas PNG.
     // ==============================================================

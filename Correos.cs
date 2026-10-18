@@ -20,8 +20,7 @@ namespace Avances
             return string.IsNullOrWhiteSpace(c) ? "mesadepartes.csharp@gmail.com" : c.Trim();
         }
 
-        // Para pruebas locales puede escribir su clave entre las comillas de claveLocal.
-        // Déjela VACÍA ("") antes de compartir el proyecto; entonces se usa MESA_CLAVE_APP.
+        
         static string claveLocal = "sqmgxgltnxsuenlm";
 
         static string ObtenerClave()
@@ -37,7 +36,7 @@ namespace Avances
             smtp.Credentials = new NetworkCredential(correoSistema, clave);
             return smtp;
         }
-
+        
         // ==========================================================
         // 2. ENVÍO DE CORREOS
         // ==========================================================

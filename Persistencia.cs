@@ -4,11 +4,7 @@ using static Avances.Program;
 
 namespace Avances
 {
-    // ==============================================================
-    // MÓDULO: PERSISTENCIA                                   (TEMA 5)
-    // Lectura y escritura de archivos de texto:
-    // usuarios.txt y expedientes.txt (StreamWriter / StreamReader).
-    // ==============================================================
+   
     internal static class Persistencia
     {
         // ==========================================================

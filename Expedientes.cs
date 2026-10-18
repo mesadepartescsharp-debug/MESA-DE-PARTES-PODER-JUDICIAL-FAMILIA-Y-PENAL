@@ -6,7 +6,7 @@ using static Avances.Program;
 namespace Avances
 {
     // ==============================================================
-    // MÓDULO: EXPEDIENTES                             (TEMAS 2, 3 y 4)
+    // MÓDULO: EXPEDIENTES                             
     // Registro de expedientes, medios probatorios, consultas,
     // listados y ordenamiento burbuja.
     // ==============================================================

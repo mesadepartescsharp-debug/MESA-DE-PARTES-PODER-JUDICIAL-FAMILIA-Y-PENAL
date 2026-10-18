@@ -5,7 +5,7 @@ using static Avances.Program;
 namespace Avances
 {
     // ==============================================================
-    // MÓDULO: JUECES                                   (TEMAS 1 a 4)
+    // MÓDULO: JUECES                                   
     // Acceso del juez, expedientes asignados, consulta, actualización
     // de estados, ordenamiento por fecha y estadísticas.
     // ==============================================================
