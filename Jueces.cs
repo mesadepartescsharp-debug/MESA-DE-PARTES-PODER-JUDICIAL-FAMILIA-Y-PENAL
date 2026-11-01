@@ -68,7 +68,7 @@ namespace Avances
                 Console.WriteLine($"En revisión  : {ContarEstadoJuez(juez, "EN REVISIÓN")}");
                 Console.WriteLine($"Atendidos    : {ContarEstadoJuez(juez, "ATENDIDO")}");
                 Seccion("OPCIONES");
-                Console.WriteLine("1. Expedientes asignados\n2. Consultar expediente\n3. Ordenar por fecha\n" +
+                Console.WriteLine("1. Expedientes asignados\n2. Consultar expediente\n3. Expedientes para dar prioridad\n" +
                                   "4. Estadísticas\n5. Cerrar sesión\n");
                 op = Leer("Opción: ");
                 if (op == "1") MostrarExpedientesJuez(juez);
@@ -236,64 +236,72 @@ namespace Avances
             Console.ReadKey();
         }
 
-        // ==========================================================
-        // 5. ORDENAMIENTO POR FECHA Y ESTADÍSTICAS
-        // ==========================================================
+        // ====================================================================
+        // 5. ORDENAMIENTO POR FECHA Y ESTADÍSTICAS /AHORA CAMBIADO-> PRIORIDAD
+        // ====================================================================
         static void OrdenarExpedientesJuez(string juez)
         {
-            int total = ContarExpedientesJuez(juez);
+            int total = 0;
+            for (int i = 0; i < cantidad; i++)
+                if (jueces[i] == juez && estados[i] != "ATENDIDO")
+                    total++;
+
             if (total == 0)
             {
-                Console.WriteLine("Ninguno para ordenar.");
+                Console.Clear();
+                Titulo("EXPEDIENTES PARA DAR PRIORIDAD");
+                Console.WriteLine("No hay expedientes pendientes de atención.");
                 Console.ReadKey();
                 return;
             }
+            string[,] matrizPrioritarios = new string[total, 5];
 
-            var cod = new string[total];
-            var tip = new string[total];
             var fec = new string[total];
             var hor = new string[total];
-            var est = new string[total];
             int idx = 0;
+
             for (int i = 0; i < cantidad; i++)
-                if (jueces[i] == juez)
+                if (jueces[i] == juez && estados[i] != "ATENDIDO")
                 {
-                    cod[idx] = codigos[i];
-                    tip[idx] = tiposDocumento[i];
+                    matrizPrioritarios[idx, 0] = codigos[i];
+                    matrizPrioritarios[idx, 1] = tiposDocumento[i];
+                    matrizPrioritarios[idx, 2] = fechasRegistro[i];
+                    matrizPrioritarios[idx, 3] = horasRegistro[i];
+                    matrizPrioritarios[idx, 4] = estados[i];
+
                     fec[idx] = fechasRegistro[i];
                     hor[idx] = horasRegistro[i];
-                    est[idx] = estados[i];
                     idx++;
                 }
 
-            Console.Clear();
-            Console.WriteLine("1. Ascendente  2. Descendente");
-            string op = Leer("Opción: ");
-            if (op != "1" && op != "2")
-            {
-                Console.WriteLine("Inválido.");
-                Console.ReadKey();
-                return;
-            }
             for (int i = 0; i < total - 1; i++)
                 for (int j = 0; j < total - 1 - i; j++)
                 {
                     var f1 = ObtenerFechaHora(fec[j], hor[j]);
                     var f2 = ObtenerFechaHora(fec[j + 1], hor[j + 1]);
-                    if ((op == "1" && f1 > f2) || (op == "2" && f1 < f2))
+                    if (f1 > f2)
                     {
-                        string t;
-                        t = cod[j]; cod[j] = cod[j + 1]; cod[j + 1] = t;
-                        t = tip[j]; tip[j] = tip[j + 1]; tip[j + 1] = t;
-                        t = fec[j]; fec[j] = fec[j + 1]; fec[j + 1] = t;
-                        t = hor[j]; hor[j] = hor[j + 1]; hor[j + 1] = t;
-                        t = est[j]; est[j] = est[j + 1]; est[j + 1] = t;
+                        string tempFec = fec[j]; fec[j] = fec[j + 1]; fec[j + 1] = tempFec;
+                        string tempHor = hor[j]; hor[j] = hor[j + 1]; hor[j + 1] = tempHor;
+
+                        for (int c = 0; c < 5; c++)
+                        {
+                            string tempM = matrizPrioritarios[j, c];
+                            matrizPrioritarios[j, c] = matrizPrioritarios[j + 1, c];
+                            matrizPrioritarios[j + 1, c] = tempM;
+                        }
                     }
                 }
 
-            Titulo("RESULTADO DEL ORDENAMIENTO");
+            Console.Clear();
+            Titulo("EXPEDIENTES PARA DAR PRIORIDAD");
+
             for (int i = 0; i < total; i++)
-                Console.WriteLine($"{cod[i]} | {tip[i]} | {fec[i]} {MostrarHora12(hor[i])} | {est[i]}");
+            {
+                Console.WriteLine($"[!] Este expediente está desde la fecha: {matrizPrioritarios[i, 2]} a las {MostrarHora12(matrizPrioritarios[i, 3])}");
+                Console.WriteLine($"    Código: {matrizPrioritarios[i, 0]} | Tipo: {matrizPrioritarios[i, 1]} | Estado: {matrizPrioritarios[i, 4]}\n");
+            }
+
             Console.ReadKey();
         }
 
