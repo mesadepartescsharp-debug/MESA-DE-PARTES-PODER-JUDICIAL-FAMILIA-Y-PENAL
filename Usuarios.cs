@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using static Avances.Program;
 
 namespace Avances
@@ -255,27 +256,49 @@ namespace Avances
         static void MenuUsuarioRegistrado()
         {
             string op = "";
-            while (op != "5")
+            while (op != "6")
             {
                 Console.Clear();
                 Titulo("PANEL DEL USUARIO");
-                if (usuarioActual >= 0) Console.WriteLine("Usuario: " + usuariosNombres[usuarioActual]);
+
+                if (usuarioActual >= 0)
+                    Console.WriteLine("Usuario: " + usuariosNombres[usuarioActual]);
+
                 Seccion("OPCIONES DEL USUARIO");
-                Console.WriteLine("1. Registrar expediente\n2. Mis expedientes\n3. Revisar estado\n4. Mi cuenta\n" +
-                                  "5. Cerrar sesión\n");
+
+                Console.WriteLine(
+                    "1. Registrar expediente\n" +
+                    "2. Mis expedientes\n" +
+                    "3. Revisar estado\n" +
+                    "4. Mi cuenta\n" +
+                    "5. Presentar documentación complementaria\n" +
+                    "6. Cerrar sesión\n");
+
                 op = Leer("Opción: ");
-                if (op == "1") Expedientes.RegistrarExpediente();
-                else if (op == "2") MostrarMisExpedientes();
-                else if (op == "3") RevisarEstadoUsuario();
-                else if (op == "4") MostrarCuentaUsuario();
-                else if (op != "5")
+
+                if (op == "1")
+                    Expedientes.RegistrarExpediente();
+
+                else if (op == "2")
+                    MostrarMisExpedientes();
+
+                else if (op == "3")
+                    RevisarEstadoUsuario();
+
+                else if (op == "4")
+                    MostrarCuentaUsuario();
+
+                else if (op == "5")
+                {
+                    PresentarDocumentacionComplementaria();
+                }
+                else if (op != "6")
                 {
                     Console.WriteLine("Opción inválida.");
                     Console.ReadKey();
                 }
             }
         }
-
         static void MostrarMisExpedientes()
         {
             Console.Clear();
@@ -314,7 +337,123 @@ namespace Avances
             }
             Console.ReadKey();
         }
+        static void PresentarDocumentacionComplementaria()
+        {
+            Console.Clear();
+            Titulo("DOCUMENTACIÓN COMPLEMENTARIA");
 
+            string codigo = Leer("Código del expediente: ").Trim().ToUpper();
+            int pos = -1;
+
+            for (int i = 0; i < cantidad; i++)
+            {
+                if (codigos[i] == codigo &&
+                    propietariosDni[i] == usuariosDnis[usuarioActual])
+                {
+                    pos = i;
+                    break;
+                }
+            }
+
+            if (pos == -1)
+            {
+                Console.WriteLine("El expediente no existe o no le pertenece.");
+                Console.ReadKey();
+                return;
+            }
+
+            if (estados[pos] != "CONTROL" ||
+                requiereComplemento[pos] != "SÍ")
+            {
+                Console.WriteLine("Este expediente no tiene complementos pendientes.");
+                Console.ReadKey();
+                return;
+            }
+
+            Seccion("REQUERIMIENTO DEL JUEZ");
+
+            Console.WriteLine("Expediente: " + codigos[pos]);
+            Console.WriteLine("\nDOCUMENTACIÓN COMPLEMENTARIA SOLICITADA");
+
+            string tipo = tipoRequerimiento[pos];
+
+            if (tipo == "AMBOS")
+                Console.WriteLine("Tipo: Documentación y medios probatorios adicionales.");
+            else if (tipo == "DOCUMENTO COMPLEMENTARIO")
+                Console.WriteLine("Tipo: Documentación adicional.");
+            else if (tipo == "MEDIO PROBATORIO ADICIONAL")
+                Console.WriteLine("Tipo: Medios probatorios adicionales.");
+
+            Console.WriteLine("Detalle / Observación: " + observacionesControl[pos]);
+
+            Console.WriteLine("\nRESULTADO DE LA REVISIÓN:");
+            Console.WriteLine("La documentación presentada se encuentra conforme");
+            Console.WriteLine("para continuar con el trámite del expediente.");
+            Console.WriteLine("Sin embargo, el juez considera conveniente incorporar");
+            Console.WriteLine("información adicional que contribuya a fortalecer");
+            Console.WriteLine("la evaluación del caso.");
+
+            Console.WriteLine("\nPRESENTAR DOCUMENTACIÓN COMPLEMENTARIA");
+            Console.WriteLine("1. Adjuntar archivo");
+            Console.WriteLine("2. Volver");
+
+            string opcion = Leer("Opción: ");
+
+            if (opcion == "1")
+            {
+                string ruta = "";
+
+                using (var ventana = new System.Windows.Forms.OpenFileDialog())
+                {
+                    ventana.Title = "Seleccionar documentación complementaria";
+                    ventana.InitialDirectory = Environment.GetFolderPath(
+                        Environment.SpecialFolder.Desktop);
+                    ventana.Filter = "Todos los archivos (*.*)|*.*";
+
+                    if (ventana.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                        ruta = ventana.FileName;
+                }
+
+                if (!File.Exists(ruta))
+                {
+                    Console.WriteLine("El archivo no existe. Verifique la ruta.");
+                }
+                else
+                {
+                    string destino = Expedientes.CopiarAdjunto(ruta, codigos[pos]);
+
+                    if (File.Exists(destino) &&
+                        Path.GetFullPath(destino) != Path.GetFullPath(ruta))
+                    {
+                        int n = cantidadComplementarios[pos];
+                        if (n >= 10)
+                        {
+                            Console.WriteLine("Se alcanzó el máximo de 10 archivos complementarios.");
+                            Console.ReadKey();
+                            return;
+                        }
+
+                        if (n < 10)
+                        {
+                            string descripcion = Leer("Descripción del archivo: ");
+
+                            archivosComplementarios[pos, n] = destino;
+                            descripcionesComplementarios[pos, n] = descripcion;
+                            cantidadComplementarios[pos]++;
+                            Persistencia.GuardarExpedientes();
+                        }
+                        Console.WriteLine("Archivo copiado correctamente.");
+                        Console.WriteLine("Ubicación: " + destino);
+                    }
+                    else
+                    {
+                        Console.WriteLine("No se pudo copiar el archivo.");
+                    }
+                }
+
+                Console.ReadKey();
+            }
+        }
         // ==========================================================
         // 5. MI CUENTA (modificación de datos)
         // ==========================================================

@@ -27,7 +27,7 @@ namespace Avances
             string r = Path.Combine(carpetaExe, "Plantillas", archivo);
             if (File.Exists(r)) return r;
             return Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..",
-                "Referencias_Diseno", archivo));
+            "Plantillas", archivo));
         }
 
         static void ColocarPlantilla(XGraphics g, string archivo)
@@ -44,6 +44,66 @@ namespace Avances
             g.DrawString(texto, new XFont("Arial", tam, bold ? XFontStyle.Bold : XFontStyle.Regular), XBrushes.Black,
                 new XRect(x, y, ancho, 16), XStringFormats.CenterLeft);
         }
+
+        static void EscribirObservacionControl(XGraphics g, string texto)
+        {
+            if (string.IsNullOrWhiteSpace(texto)) return;
+
+            double ancho = 315;
+            double alto = 48;
+            double inicioX = 235;
+            double inicioY = 657;
+
+            for (double tam = 9; tam >= 5; tam -= 0.5)
+            {
+                var fuente = new XFont("Arial", tam, XFontStyle.Regular);
+                var palabras = texto.Split(new[] { ' ' },
+                    StringSplitOptions.RemoveEmptyEntries);
+
+                var renglones = new System.Collections.Generic.List<string>();
+                string linea = "";
+
+                foreach (string palabra in palabras)
+                {
+                    string prueba = linea == "" ? palabra : linea + " " + palabra;
+
+                    if (g.MeasureString(prueba, fuente).Width > ancho && linea != "")
+                    {
+                        renglones.Add(linea);
+                        linea = palabra;
+                    }
+                    else
+                    {
+                        linea = prueba;
+                    }
+                }
+
+                if (linea != "") renglones.Add(linea);
+
+                double salto = tam + 4;
+
+                if (renglones.Count * salto <= alto)
+                {
+                    for (int i = 0; i < renglones.Count; i++)
+                    {
+                        g.DrawString(renglones[i], fuente, XBrushes.Black,
+                            new XRect(inicioX, inicioY + i * salto, ancho, salto),
+                            XStringFormats.CenterLeft);
+                    }
+
+                    return;
+                }
+            }
+
+            // Si el texto supera el espacio disponible, se conserva completo
+            // en los datos del expediente y se muestra un aviso en el PDF.
+            g.DrawString("Observación extensa. Consulte el detalle del expediente.",
+                new XFont("Arial", 8, XFontStyle.Regular),
+                XBrushes.Black,
+                new XRect(inicioX, inicioY, ancho, 16),
+                XStringFormats.CenterLeft);
+        }
+
 
         // ==========================================================
         // 2. ESCRITURA DE DATOS SOBRE LA PLANTILLA
@@ -90,7 +150,9 @@ namespace Avances
             }
             else
             {
-                EscribirDato(g, est, x, y + s * 6, 130, 9.3, true);
+                if (est != "GESTIÓN")
+                    EscribirDato(g, est, x, y + s * 6, 310, 9.3, true);
+
                 EscribirDato(g, jueces[p], x, y + s * 7, 310, 9.3, false);
             }
         }
@@ -155,7 +217,125 @@ namespace Avances
 
         internal static string GenerarPDFAtendido(int p) => CrearPDF(p, "ATENDIDO", "03_ATENDIDO_VERDE_A4.png",
             "ACTUALIZACION_ATENDIDO_");
+        internal static string GenerarPDFControl(int p)
+        {
+            return CrearPDFNuevo(p, "CONTROL", "04_CONTROL_MORADO_A4.png", "ACTUALIZACION_CONTROL_");
+        }
 
+        internal static string GenerarPDFGestion(int p)
+        {
+            return CrearPDFNuevo(p, "GESTIÓN", "05_GESTION_MARRON_A4.png", "ACTUALIZACION_GESTION_");
+        }
+        static string CrearPDFNuevo(int p, string est, string plantilla, string prefijo)
+        {
+            try
+            {
+                var pdf = new PdfDocument();
+                var pag = pdf.AddPage();
+                pag.Size = PdfSharp.PageSize.A4;
+
+                var g = XGraphics.FromPdfPage(pag);
+                ColocarPlantilla(g, plantilla);
+
+                string fechaDoc = DateTime.Now.ToString("dd/MM/yyyy hh:mm tt");
+
+                // Código y fecha de actualización
+                g.DrawString(codigos[p], new XFont("Arial", 10, XFontStyle.Bold),
+                XBrushes.Black, new XRect(420, 180, 150, 16),
+                XStringFormats.Center);
+
+                g.DrawString(fechaDoc, new XFont("Arial", 8.5, XFontStyle.Regular),
+                    XBrushes.Black, new XRect(420, 231, 150, 16),
+                    XStringFormats.Center);
+
+                // Datos del usuario
+                double yUsuario = est == "CONTROL" ? 291 : 299;
+                double saltoUsuario = est == "CONTROL" ? 20.5 : 22.5;
+
+                EscribirDato(g, nombres[p], 235, yUsuario, 325, 9.5, false);
+                EscribirDato(g, dnis[p], 235, yUsuario + saltoUsuario, 325, 9.5, false);
+                EscribirDato(g, telefonos[p], 235, yUsuario + saltoUsuario * 2, 325, 9.5, false);
+                EscribirDato(g, correos[p], 235, yUsuario + saltoUsuario * 3, 325, 9, false);
+
+                // Datos del expediente
+                double yExp = est == "CONTROL" ? 405 : 420;
+                double saltoExp = est == "CONTROL" ? 20.5 : 22.5;
+
+                EscribirDato(g, tiposDocumento[p], 235, yExp, 325, 9.5, false);
+                EscribirDato(g, especialidades[p], 235, yExp + saltoExp, 325, 9.5, false);
+                EscribirDato(g, Path.GetFileName(documentos[p]), 235, yExp + saltoExp * 2, 325, 9, false);
+                EscribirDato(g, jueces[p], 235, yExp + saltoExp * 3, 325, 9, false);
+
+                // Estado actual
+                if (est != "GESTIÓN")
+                {
+                    g.DrawString(est, new XFont("Arial", 10, XFontStyle.Bold),
+                        XBrushes.Black,
+                        new XRect(245, yExp + saltoExp * 4, 130, 18),
+                        XStringFormats.Center);
+                }
+                // Información del control documental
+                if (est == "CONTROL")
+                {
+                    // Marcar la casilla correspondiente
+                    var fuenteMarca = new XFont("Arial", 13, XFontStyle.Bold);
+
+                    if (requiereComplemento[p] == "SÍ")
+                        g.DrawString("X", fuenteMarca, XBrushes.Black,
+                            new XRect(307, 555, 14, 16), XStringFormats.Center);
+
+                    else if (requiereComplemento[p] == "NO")
+                        g.DrawString("X", fuenteMarca, XBrushes.Black,
+                            new XRect(435, 555, 14, 16), XStringFormats.Center);
+
+                    // Tipo de requerimiento
+                    EscribirDato(g, tipoRequerimiento[p] ?? "",
+                        235, 630, 325, 9, false);
+
+                    // Detalle u observación del juez
+                    EscribirObservacionControl(g, observacionesControl[p] ?? "");
+
+
+                    // Cubrir únicamente el texto original de indicaciones
+                    // Fondo lila para cubrir las indicaciones originales
+                    var fondoLila = new XSolidBrush(XColor.FromArgb(243, 232, 248));
+
+                    g.DrawRectangle(fondoLila, 70, 740, 515, 43);
+
+                    // Mensaje del resultado del control
+                    var fuenteMensaje = new XFont("Arial", 9, XFontStyle.Regular);
+                    var colorMensaje = new XSolidBrush(XColor.FromArgb(75, 35, 95));
+
+                    string linea1 = "La documentación presentada se encuentra conforme para continuar con el trámite.";
+
+                    string linea2 = requiereComplemento[p] == "SÍ"
+                        ? "Se solicita información adicional para fortalecer la evaluación del caso."
+                        : "No se solicita información complementaria.";
+
+                    g.DrawString(linea1, fuenteMensaje, colorMensaje,
+                        new XRect(85, 745, 485, 15), XStringFormats.CenterLeft);
+
+                    g.DrawString(linea2, fuenteMensaje, colorMensaje,
+                        new XRect(85, 760, 485, 15), XStringFormats.CenterLeft);
+                }
+                // Pie de página
+                EscribirDato(g, codigos[p], 70, 805, 120, 12, true);
+                EscribirDato(g, DateTime.Now.ToString("dd/MM/yyyy"), 490, 805, 85, 9, false);
+
+
+                string ruta = Path.Combine(CarpetaPDF(), prefijo + codigos[p] + ".pdf");
+
+                pdf.Save(ruta);
+                pdf.Close();
+
+                return ruta;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ERROR PDF: " + ex.Message);
+                return "";
+            }
+        }
         static string CrearPDF(int p, string est, string plantilla, string prefijo)
         {
             try

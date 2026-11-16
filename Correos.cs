@@ -37,7 +37,6 @@ namespace Avances
             return smtp;
         }
         
-        // ==========================================================
         // 2. ENVÍO DE CORREOS
         // ==========================================================
         internal static bool EnviarCodigoRecuperacion(string destino, string codigo)

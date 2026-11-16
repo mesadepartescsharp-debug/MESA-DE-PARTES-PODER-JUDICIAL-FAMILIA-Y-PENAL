@@ -69,9 +69,16 @@ namespace Avances
                     sw.WriteLine($"{codigos[i]}|{nombres[i]}|{dnis[i]}|{telefonos[i]}|{correos[i]}|" +
                                  $"{tiposDocumento[i]}|{especialidades[i]}|{jueces[i]}|{documentos[i]}|" +
                                  $"{descripcionDocumento[i]}|{cantidadMedios[i]}|{propietariosDni[i]}|" +
-                                 $"{fechasRegistro[i]}|{horasRegistro[i]}|{estados[i]}|{foliosDocumentos[i]}");
+                                 $"{fechasRegistro[i]}|{horasRegistro[i]}|{estados[i]}|{foliosDocumentos[i]}|" +
+                                 $"{requiereComplemento[i]}|{tipoRequerimiento[i]}|{observacionesControl[i]?.Replace("|", "/").Replace("\r", " ").Replace("\n", " ")}");
                     for (int j = 0; j < cantidadMedios[i]; j++)
                         sw.WriteLine($"MEDIO|{tiposMedios[i, j]}|{archivosMedios[i, j]}|{descripcionMedios[i, j]}");
+                    sw.WriteLine($"COMPLEMENTARIOS|{cantidadComplementarios[i]}");
+
+                    for (int j = 0; j < cantidadComplementarios[i]; j++)
+                    {
+                        sw.WriteLine($"COMPLEMENTO|{archivosComplementarios[i, j]}|{descripcionesComplementarios[i, j]}");
+                    }
                 }
         }
 
@@ -82,11 +89,16 @@ namespace Avances
             using (StreamReader lector = new StreamReader(archivoDatos))
             {
                 string linea;
-                while (cantidad < 100 && (linea = lector.ReadLine()) != null)
+                string pendiente = null;
+
+                while (cantidad < 100 &&
+                       (linea = pendiente ?? lector.ReadLine()) != null)
                 {
+                    pendiente = null;
+                    
                     string[] d = linea.Split('|');
                     if (d.Length == 0 || d[0] == "MEDIO" ||
-                        (d.Length != 11 && d.Length != 15 && d.Length != 16)) continue;
+                    (d.Length != 11 && d.Length != 15 && d.Length != 16 && d.Length != 19)) continue;
                     int medios;
                     if (!int.TryParse(d[10], out medios) || medios < 0 || medios > 3) break;
                     codigos[cantidad] = d[0];
@@ -104,11 +116,14 @@ namespace Avances
                     horasRegistro[cantidad] = d.Length >= 15 ? d[13] : "--:--";
                     estados[cantidad] = d.Length >= 15 ? d[14] : "REGISTRADO";
                     int folios;
-                    foliosDocumentos[cantidad] = d.Length == 16 && int.TryParse(d[15], out folios)
+                    foliosDocumentos[cantidad] = d.Length >= 16 && int.TryParse(d[15], out folios)
                         ? folios
                         : (File.Exists(documentos[cantidad])
                             ? Validaciones.ContarFoliosPDF(documentos[cantidad])
                             : 0);
+                    requiereComplemento[cantidad] = d.Length == 19 ? d[16] : "";
+                    tipoRequerimiento[cantidad] = d.Length == 19 ? d[17] : "";
+                    observacionesControl[cantidad] = d.Length == 19 ? d[18] : "";
                     cantidadMedios[cantidad] = 0;
                     for (int j = 0; j < medios; j++)
                     {
@@ -120,6 +135,42 @@ namespace Avances
                         archivosMedios[cantidad, j] = m[2];
                         descripcionMedios[cantidad, j] = m[3];
                         cantidadMedios[cantidad]++;
+                    }
+                    cantidadComplementarios[cantidad] = 0;
+
+                    string siguiente = lector.ReadLine();
+
+                    if (siguiente != null && siguiente.StartsWith("COMPLEMENTARIOS|"))
+                    {
+                        string[] datos = siguiente.Split('|');
+                        int total;
+
+                        if (datos.Length == 2 &&
+                            int.TryParse(datos[1], out total) &&
+                            total >= 0 && total <= 10)
+                        {
+                            for (int j = 0; j < total; j++)
+                            {
+                                string complemento = lector.ReadLine();
+                                if (complemento == null) break;
+
+                                string[] c = complemento.Split('|');
+
+                                if (c.Length != 3 || c[0] != "COMPLEMENTO")
+                                {
+                                    pendiente = complemento;
+                                    break;
+                                }
+
+                                archivosComplementarios[cantidad, j] = c[1];
+                                descripcionesComplementarios[cantidad, j] = c[2];
+                                cantidadComplementarios[cantidad]++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        pendiente = siguiente;
                     }
                     cantidad++;
                 }

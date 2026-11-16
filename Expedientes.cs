@@ -267,7 +267,7 @@ namespace Avances
         }
 
         // Guarda una copia del archivo en Adjuntos\<código>\ y devuelve la nueva ruta.
-        static string CopiarAdjunto(string ruta, string codigo)
+        internal static string CopiarAdjunto(string ruta, string codigo)
         {
             try
             {

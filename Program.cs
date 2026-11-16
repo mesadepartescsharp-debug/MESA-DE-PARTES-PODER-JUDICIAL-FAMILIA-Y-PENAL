@@ -4,19 +4,12 @@ using System.IO;
 namespace Avances
 {
     // ==============================================================
-    // MÓDULO: PROGRAMA PRINCIPAL                       (TEMAS 1 y 2)
-    // Main, menú principal, variables compartidas y utilidades de consola.
-    // Los demás módulos (Usuarios, Validaciones, Expedientes, Jueces,
-    // Persistencia, DocumentosPDF y Correos) usan estos datos mediante
-    // "using static Avances.Program;".
+    // MÓDULO: PROGRAMA PRINCIPAL                     
     // ==============================================================
     internal static class Program
     {
         // ==========================================================
         // 1. CARPETAS Y ARCHIVOS DEL SISTEMA
-        // Todo queda dentro de Datos\, en la carpeta del proyecto (donde está el .csproj),
-        // así se ve en el Explorador de soluciones y no se pierde al recompilar.
-        // Si no hay .csproj (programa copiado a otra PC), se usa la carpeta del .exe.
         // ==========================================================
         internal static string carpetaExe = AppDomain.CurrentDomain.BaseDirectory;
         internal static string carpetaProyecto = BuscarCarpetaProyecto();
@@ -29,7 +22,7 @@ namespace Avances
         // ==========================================================
         // 2. VARIABLES COMPARTIDAS
         // ==========================================================
-        // TEMA 3: Arreglos unidimensionales (paralelos) - expedientes
+        //  Arreglos unidimensionales (paralelos) - expedientes
         internal static string[] codigos = new string[100];
         internal static string[] nombres = new string[100];
         internal static string[] dnis = new string[100];
@@ -44,9 +37,18 @@ namespace Avances
         internal static string[] fechasRegistro = new string[100];
         internal static string[] horasRegistro = new string[100];
         internal static string[] estados = new string[100];
+
+        internal static string[] requiereComplemento = new string[100];
+        internal static string[] tipoRequerimiento = new string[100];
+        internal static string[] observacionesControl = new string[100];
+        // Documentación complementaria presentada por el usuario
+        internal static string[,] archivosComplementarios = new string[100, 10];
+        internal static string[,] descripcionesComplementarios = new string[100, 10];
+        internal static int[] cantidadComplementarios = new int[100];
+
         internal static int[] foliosDocumentos = new int[100];
 
-        // TEMA 3: Arreglos bidimensionales
+        // Arreglos bidimensionales
         internal static string[,] tiposMedios = new string[100, 3];
         internal static string[,] archivosMedios = new string[100, 3];
         internal static string[,] descripcionMedios = new string[100, 3];
@@ -55,7 +57,7 @@ namespace Avances
         // Encapsulamiento: lectura pública interna, modificación controlada en el registro.
         internal static int TotalExpedientes { get { return cantidad; } }
 
-        // Usuarios (arreglos paralelos - TEMA 4)
+        // Usuarios (arreglos paralelos )
         internal static string[] usuariosNombres = new string[100];
         internal static string[] usuariosDnis = new string[100];
         internal static string[] usuariosTelefonos = new string[100];
@@ -99,7 +101,7 @@ namespace Avances
             Console.WriteLine("  " + texto);
             Console.WriteLine("========================================");
         }
-        // Sube desde bin\Debug hasta encontrar la carpeta que contiene el archivo .csproj.
+     
         static string BuscarCarpetaProyecto()
         {
             DirectoryInfo carpeta = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
